@@ -7,13 +7,9 @@ class DriverExpenseService
     public function calculateDriverExpenses(array $drivers, array $expenses)
     {
         $result = [];
-        $driverTotals = [];
+        $driverTotals = array_fill_keys($drivers, 0);
         $numberOfDrivers = count($drivers);
         $totalAmount = 0;
-
-        foreach ($drivers as $driver) {
-            $driverTotals[$driver] = 0;
-        }
 
         foreach ($expenses as $key => $expense) {
             $result[$key]['Total'] = $expense;
@@ -26,12 +22,11 @@ class DriverExpenseService
                 $driverTotals[$drivers[$i]] = bcadd($driverTotals[$drivers[$i]], $amountPerDriver, 2);
             }
 
-            if ($leftoverCents > 0) {
-                for ($i = 0; $i < $leftoverCents; $i++) {
-                    $minDriver = $this->minDriverTotal($driverTotals);
-                    $result[$key][$minDriver] = bcadd($result[$key][$minDriver], 0.01, 2);
-                    $driverTotals[$minDriver] = bcadd($driverTotals[$minDriver], 0.01, 2);
-                }
+            while ($leftoverCents > 0) {
+                $minDriver = $this->minDriverTotal($driverTotals);
+                $result[$key][$minDriver] = bcadd($result[$key][$minDriver], 0.01, 2);
+                $driverTotals[$minDriver] = bcadd($driverTotals[$minDriver], 0.01, 2);
+                $leftoverCents--;
             }
         }
 
@@ -41,7 +36,8 @@ class DriverExpenseService
         return $result;
     }
 
-    private function minDriverTotal (array $driverTotals) {
+    private function minDriverTotal(array $driverTotals)
+    {
         $min = array_keys($driverTotals, min($driverTotals))[0];
         return $min;
     }
